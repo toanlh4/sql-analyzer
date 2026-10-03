@@ -53,12 +53,14 @@ public class PgColumnLineageTest extends PostgresTestBase {
     @ParameterizedTest
     @MethodSource("providePostgresSqls")
     void testSimple(String sql, boolean expectedResult) throws Exception {
-        SchemaPlus rootSchema = PgColumnLineage.registerPostgres(dataSource, null);   // discover all schemas
-        FrameworkConfig config = PgColumnLineage.buildConfig(rootSchema, SCHEMA_TEST);
-        Map<String, List<PgColumnLineage.Source>> lineage = PgColumnLineage.analyze(config, sql);
+        PgColumnLineage columnLineage = new PgColumnLineage(dataSource);
+        
+        SchemaPlus rootSchema = columnLineage.registerPostgres(null);   // discover all schemas
+        FrameworkConfig config = columnLineage.buildConfig(rootSchema, SCHEMA_TEST);
+        Map<String, List<Source>> lineage = columnLineage.analyze(config, sql);
 
         LOGGER.info("SQL: " + sql);
-        for (Map.Entry<String, List<PgColumnLineage.Source>> e : lineage.entrySet()) {
+        for (Map.Entry<String, List<Source>> e : lineage.entrySet()) {
             String rhs;
             if (e.getValue() == null) {
                 rhs = "<unknown>";
