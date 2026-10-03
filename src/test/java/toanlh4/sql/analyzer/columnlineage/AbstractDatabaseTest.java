@@ -1,4 +1,4 @@
-package toanlh4.sql.analyzer;
+package toanlh4.sql.analyzer.columnlineage;
 
 import javax.sql.DataSource;
 

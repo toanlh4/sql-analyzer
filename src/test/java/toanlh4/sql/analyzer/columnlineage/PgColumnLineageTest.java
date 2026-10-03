@@ -1,5 +1,7 @@
-package toanlh4.sql.analyzer;
+package toanlh4.sql.analyzer.columnlineage;
 
+import toanlh4.sql.analyzer.columnlineage.ColumnOrigin;
+import toanlh4.sql.analyzer.columnlineage.PgColumnLineage;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -27,26 +29,26 @@ public class PgColumnLineageTest extends PostgresTestBase {
         return Stream.of(
                 Arguments.of("""
                     select c.customer_id
-                            , c.name as customer_name
-                            , c.tier
-                            , o.order_id
-                            , o.status
-                            , o.total_amount
-                            , o.ordered_at
-                        from customers c
-                        join orders o on o.customer_id = c.customer_id""", true),
+                        , c.name as customer_name
+                        , c.tier
+                        , o.order_id
+                        , o.status
+                        , o.total_amount
+                        , o.ordered_at
+                    from customers c
+                    join orders o on o.customer_id = c.customer_id""", true),
                 Arguments.of("""
                     select o.order_id
-                            , c.name as customer_name
-                            , p.name as product_name
-                            , oi.quantity
-                            , oi.unit_price
-                            , oi.discount
-                            , (oi.quantity * oi.unit_price * (1 - oi.discount / 100)) as line_total
-                        from order_items oi
-                        join orders o on o.order_id = oi.order_id
-                        join customers c on c.customer_id = o.customer_id
-                        join products p on p.product_id = oi.product_id""", true)
+                        , c.name as customer_name
+                        , p.name as product_name
+                        , oi.quantity
+                        , oi.unit_price
+                        , oi.discount
+                        , (oi.quantity * oi.unit_price * (1 - oi.discount / 100)) as line_total
+                    from order_items oi
+                    join orders o on o.order_id = oi.order_id
+                    join customers c on c.customer_id = o.customer_id
+                    join products p on p.product_id = oi.product_id""", true)
         );
     }
 
@@ -57,10 +59,10 @@ public class PgColumnLineageTest extends PostgresTestBase {
         
         SchemaPlus rootSchema = columnLineage.registerPostgres(null);   // discover all schemas
         FrameworkConfig config = columnLineage.buildConfig(rootSchema, SCHEMA_TEST);
-        Map<String, List<Source>> lineage = columnLineage.analyze(config, sql);
+        Map<String, List<ColumnOrigin>> lineage = columnLineage.analyze(config, sql);
 
         LOGGER.info("SQL: " + sql);
-        for (Map.Entry<String, List<Source>> e : lineage.entrySet()) {
+        for (Map.Entry<String, List<ColumnOrigin>> e : lineage.entrySet()) {
             String rhs;
             if (e.getValue() == null) {
                 rhs = "<unknown>";

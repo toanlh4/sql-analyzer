@@ -1,4 +1,4 @@
-package toanlh4.sql.analyzer;
+package toanlh4.sql.analyzer.columnlineage;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import static toanlh4.sql.analyzer.PgColumnLineageTest.POSTGRES;
+import static toanlh4.sql.analyzer.columnlineage.PgColumnLineageTest.POSTGRES;
 
 /**
  *

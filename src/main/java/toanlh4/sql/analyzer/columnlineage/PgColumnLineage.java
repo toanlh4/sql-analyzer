@@ -1,4 +1,4 @@
-package toanlh4.sql.analyzer;
+package toanlh4.sql.analyzer.columnlineage;
 
 import org.apache.calcite.adapter.jdbc.JdbcSchema;
 import org.apache.calcite.avatica.util.Casing;
@@ -161,7 +161,7 @@ public final class PgColumnLineage {
      * @throws org.apache.calcite.tools.ValidationException 
      * @throws org.apache.calcite.tools.RelConversionException 
      */
-    public Map<String, List<Source>> analyze(
+    public Map<String, List<ColumnOrigin>> analyze(
             FrameworkConfig config,
             String sql
     ) throws SqlParseException, ValidationException, RelConversionException  {
@@ -178,7 +178,7 @@ public final class PgColumnLineage {
 
             RelMetadataQuery mq = rel.getCluster().getMetadataQuery();
             List<String> fieldNames = rel.getRowType().getFieldNames();
-            Map<String, List<Source>> result = new LinkedHashMap<>();
+            Map<String, List<ColumnOrigin>> result = new LinkedHashMap<>();
 
             for (int i = 0; i < fieldNames.size(); i++) {
                 Set<RelColumnOrigin> origins = mq.getColumnOrigins(rel, i);
@@ -188,20 +188,20 @@ public final class PgColumnLineage {
                     continue;
                 }
 
-                List<Source> sources = new ArrayList<>();
+                List<ColumnOrigin> columnOrigins = new ArrayList<>();
                 for (RelColumnOrigin origin : origins) {
                     RelOptTable originTable = origin.getOriginTable();
                     String columnName = originTable.getRowType()
                             .getFieldList()
                             .get(origin.getOriginColumnOrdinal())
                             .getName();
-                    sources.add(new Source(
+                    columnOrigins.add(new ColumnOrigin(
                             originTable.getQualifiedName(),
                             columnName,
                             origin.isDerived())
                     );
                 }
-                result.put(fieldNames.get(i), sources);
+                result.put(fieldNames.get(i), columnOrigins);
             }
 
             return result;

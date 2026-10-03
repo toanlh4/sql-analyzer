@@ -1,4 +1,4 @@
-package toanlh4.sql.analyzer;
+package toanlh4.sql.analyzer.columnlineage;
 
 import java.io.File;
 import java.net.URL;

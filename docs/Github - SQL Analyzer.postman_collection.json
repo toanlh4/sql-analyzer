@@ -1,0 +1,81 @@
+{
+	"info": {
+		"_postman_id": "2b023a3a-5651-42cd-9251-33fc0e47579b",
+		"name": "Github - SQL Analyzer",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Column lineage - 1",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"sql\": \"select o.order_id\\n    , c.name as customer_name\\n    , p.name as product_name\\n    , oi.quantity\\n    , oi.unit_price\\n    , oi.discount\\n    , (oi.quantity * oi.unit_price * (1 - oi.discount / 100)) as line_total\\nfrom order_items oi\\njoin orders o on o.order_id = oi.order_id\\njoin customers c on c.customer_id = o.customer_id\\njoin products p on p.product_id = oi.product_id\",\r\n    \"connectionString\": \"{{db_connection_string}}\",\r\n    \"username\": \"{{db_username}}\",\r\n    \"password\": \"{{db_password}}\",\r\n    \"schema\": \"{{db_schema}}\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:21121/api/analyze-sql/column-lineage",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "21121",
+					"path": [
+						"api",
+						"analyze-sql",
+						"column-lineage"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "db_connection_string",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "db_username",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "db_password",
+			"value": "",
+			"type": "default"
+		},
+		{
+			"key": "db_schema",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
