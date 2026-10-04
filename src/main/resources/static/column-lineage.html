@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <title>Column Mapping Diagram</title>
+        <script src="./libs/jsplumb/2.15.6/js/jsplumb.min.js"></script>
+        <link rel="stylesheet" href="column-lineage.css">
+    </head>
+    <body>
+        <header>
+            <div class="header-text">
+                <h1>Source → Target column mapping</h1>
+                <p>Source table columns on the left feed the query result columns on the right. Hover a column to trace its connection.</p>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="btn" id="btn-open-db">db connection</button>
+                <button type="button" class="btn btn-primary" id="btn-open-sql">enter sql</button>
+            </div>
+        </header>
+
+        <dialog class="modal" id="modal-db">
+            <form id="form-db" method="dialog">
+                <div class="modal-head">
+                    <div class="kind">connection</div>
+                    <div class="name">Database connection</div>
+                </div>
+                <div class="modal-body">
+                    <label class="field"><span class="field-name">connection string</span>
+                        <input type="text" name="connectionString" placeholder="jdbc:postgresql://localhost:5432/mydb" required>
+                    </label>
+                    <label class="field"><span class="field-name">username</span>
+                        <input type="text" name="username" autocomplete="username" required>
+                    </label>
+                    <label class="field"><span class="field-name">password</span>
+                        <input type="password" name="password" autocomplete="current-password">
+                    </label>
+                    <label class="field"><span class="field-name">schema name</span>
+                        <input type="text" name="schema" placeholder="public">
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" data-close>cancel</button>
+                    <button type="submit" class="btn btn-primary">save</button>
+                </div>
+            </form>
+        </dialog>
+
+        <dialog class="modal modal-wide" id="modal-sql">
+            <form id="form-sql" method="dialog">
+                <div class="modal-head">
+                    <div class="kind">query</div>
+                    <div class="name">Enter SQL</div>
+                </div>
+                <div class="modal-body">
+                    <label class="field"><span class="field-name">sql statement</span>
+                        <textarea name="sql" rows="12" spellcheck="false" placeholder="INSERT INTO dim_customer SELECT ... FROM customers_raw" required></textarea>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn" data-close>cancel</button>
+                    <button type="submit" class="btn btn-primary">submit sql</button>
+                </div>
+            </form>
+        </dialog>
+
+        <div id="canvas-wrap">
+            <div id="canvas">
+                <p class="canvas-empty">No lineage yet. Click <strong>enter sql</strong> to analyze a query.</p>
+                
+                
+<!-- sample         <div class="table-head">
+                        <div class="kind">target</div>
+                        <div class="name">dim_customer</div>
+                    </div>-->
+                
+<!--sample data <div class="row key" data-row="src-id"><span class="col-name">cust_id</span><span class="col-type">int</span></div>
+                <div class="row" data-row="src-fname"><span class="col-name">first_name</span><span class="col-type">varchar</span></div>-->
+            </div>
+        </div>
+
+        <div class="legend">
+            <span>— direct</span>
+            <span>- - combined / derived</span>
+            <span>hover a row to highlight its mapping</span>
+        </div>
+        <script src="./column-lineage.js"></script>
+        <script src="./column-lineage-render.js"></script>
+    </body>
+</html>
