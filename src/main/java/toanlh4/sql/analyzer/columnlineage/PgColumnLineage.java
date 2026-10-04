@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.tools.RelConversionException;
 import org.apache.calcite.tools.ValidationException;
@@ -42,7 +43,7 @@ import org.apache.calcite.tools.ValidationException;
  */
 public final class PgColumnLineage {
 
-    private DataSource dataSource;
+    private final DataSource dataSource;
 
     public PgColumnLineage(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -56,10 +57,11 @@ public final class PgColumnLineage {
 
     /**
      * Lists the non-system schemas in the database.
-     * @return 
+     *
+     * @return
      * @throws java.sql.SQLException
      */
-    public List<String> listSchemas() throws SQLException  {
+    public List<String> listSchemas() throws SQLException {
         List<String> schemas = new ArrayList<>();
         try (Connection conn = dataSource.getConnection()) {
             DatabaseMetaData md = conn.getMetaData();
@@ -85,7 +87,7 @@ public final class PgColumnLineage {
      */
     public SchemaPlus registerPostgres(
             List<String> schemaNames
-    ) throws SQLException  {
+    ) throws SQLException {
         SchemaPlus rootSchema = Frameworks.createRootSchema(true);
         List<String> names = (schemaNames == null || schemaNames.isEmpty())
                 ? listSchemas()
@@ -110,7 +112,7 @@ public final class PgColumnLineage {
      * @param rootSchema
      * @param defaultSchemaName schema used to resolve unqualified table names,
      * normally "public"
-     * @return 
+     * @return
      */
     public FrameworkConfig buildConfig(
             SchemaPlus rootSchema,
@@ -154,17 +156,18 @@ public final class PgColumnLineage {
      *
      * {@code null} means Calcite could not determine the origin; an empty list
      * means there is no source column (a literal, for example).
+     *
      * @param config
      * @param sql
-     * @return 
-     * @throws org.apache.calcite.sql.parser.SqlParseException 
-     * @throws org.apache.calcite.tools.ValidationException 
-     * @throws org.apache.calcite.tools.RelConversionException 
+     * @return
+     * @throws org.apache.calcite.sql.parser.SqlParseException
+     * @throws org.apache.calcite.tools.ValidationException
+     * @throws org.apache.calcite.tools.RelConversionException
      */
     public Map<String, List<ColumnOrigin>> analyze(
             FrameworkConfig config,
             String sql
-    ) throws SqlParseException, ValidationException, RelConversionException  {
+    ) throws SqlParseException, ValidationException, RelConversionException {
         // A Planner is single-use: build a fresh one per statement.
         try (Planner planner = Frameworks.getPlanner(config)) {
             SqlNode parsed = planner.parse(sql);
@@ -177,14 +180,18 @@ public final class PgColumnLineage {
             RelNode rel = root.project();
 
             RelMetadataQuery mq = rel.getCluster().getMetadataQuery();
-            List<String> fieldNames = rel.getRowType().getFieldNames();
+            List<RelDataTypeField> fields = rel.getRowType().getFieldList();
             Map<String, List<ColumnOrigin>> result = new LinkedHashMap<>();
 
-            for (int i = 0; i < fieldNames.size(); i++) {
+            for (int i = 0; i < fields.size(); i++) {
                 Set<RelColumnOrigin> origins = mq.getColumnOrigins(rel, i);
+                RelDataTypeField field = fields.get(i);
+                String fieldName = field.getName();
+                String dataType = field.getType().getDigest().getDigestString();
+                
 
                 if (origins == null) {
-                    result.put(fieldNames.get(i), null);
+                    result.put(fieldName, null);
                     continue;
                 }
 
@@ -197,11 +204,13 @@ public final class PgColumnLineage {
                             .getName();
                     columnOrigins.add(new ColumnOrigin(
                             originTable.getQualifiedName(),
+                            field.getIndex(),
                             columnName,
+                            dataType,
                             origin.isDerived())
                     );
                 }
-                result.put(fieldNames.get(i), columnOrigins);
+                result.put(fieldName, columnOrigins);
             }
 
             return result;

@@ -9,16 +9,20 @@ import java.util.List;
  */
 public class ColumnOrigin {
 
-    private List<String> qualifiedNames; // [public, orders]
-    private String column;
+    private List<String> qualifiedNames; // source table [public, orders]
+    private int ordinalPosition; // 0-based index
+    private String column; // source column name
+    private String dataType;
     private boolean isDerived; // went through an expression / aggregate
 
     public ColumnOrigin() {
     }
 
-    public ColumnOrigin(List<String> qualifiedNames, String column, boolean isDerived) {
+    public ColumnOrigin(List<String> qualifiedNames, int ordinalPosition, String column, String dataType, boolean isDerived) {
         this.qualifiedNames = qualifiedNames;
+        this.ordinalPosition = ordinalPosition;
         this.column = column;
+        this.dataType = dataType;
         this.isDerived = isDerived;
     }
 
@@ -30,12 +34,28 @@ public class ColumnOrigin {
         this.qualifiedNames = qualifiedNames;
     }
 
+    public int getOrdinalPosition() {
+        return ordinalPosition;
+    }
+
+    public void setOrdinalPosition(int ordinalPosition) {
+        this.ordinalPosition = ordinalPosition;
+    }
+
     public String getColumn() {
         return column;
     }
 
     public void setColumn(String column) {
         this.column = column;
+    }
+
+    public String getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
     }
 
     public boolean isIsDerived() {
@@ -48,6 +68,6 @@ public class ColumnOrigin {
 
     @Override
     public String toString() {
-        return String.join(".", qualifiedNames) + "." + column + (isDerived ? " (derived)" : "");
+        return String.format("%s.%s #%d %s %s", String.join(".", qualifiedNames), column, ordinalPosition, dataType, (isDerived ? " (derived)" : ""));
     }
 }

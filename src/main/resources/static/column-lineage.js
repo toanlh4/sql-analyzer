@@ -107,19 +107,40 @@
             return a.targetColumnOrdinalPosition - b.targetColumnOrdinalPosition;
         });
 
-        // Group source columns by qualified table name, keeping first-seen order.
+        // Group source columns by qualified table name. A column referenced by several
+        // origins keeps its lowest ordinalPosition (and that origin's dataType).
         var sources = {};
         var sourceOrder = [];
         lineages.forEach(function (lineage) {
             (lineage.columnOrigins || []).forEach(function (origin) {
                 var key = origin.qualifiedNames.join(".");
                 if (!sources[key]) {
-                    sources[key] = { qualifiedNames: origin.qualifiedNames, columns: [] };
+                    sources[key] = { qualifiedNames: origin.qualifiedNames, columns: {} };
                     sourceOrder.push(key);
                 }
-                var cols = sources[key].columns;
-                if (cols.indexOf(origin.column) === -1) cols.push(origin.column);
+                var existing = sources[key].columns[origin.column];
+                if (!existing || origin.ordinalPosition < existing.ordinalPosition) {
+                    sources[key].columns[origin.column] = {
+                        column: origin.column,
+                        dataType: origin.dataType,
+                        ordinalPosition: origin.ordinalPosition
+                    };
+                }
             });
+        });
+
+        function byOrdinal(a, b) {
+            return a.ordinalPosition - b.ordinalPosition;
+        }
+        function sortedColumns(src) {
+            return Object.keys(src.columns).map(function (name) {
+                return src.columns[name];
+            }).sort(byOrdinal);
+        }
+
+        // Order source tables by their lowest column ordinalPosition.
+        sourceOrder.sort(function (a, b) {
+            return byOrdinal(sortedColumns(sources[a])[0], sortedColumns(sources[b])[0]);
         });
 
         var sourceCol = el("div", "table-col sources");
@@ -128,8 +149,9 @@
             var names = src.qualifiedNames;
             var schema = names.slice(0, -1).join(".");
             var card = tableCard("source", schema ? "source: " + schema : "source", names[names.length - 1]);
-            src.columns.forEach(function (column) {
-                card.appendChild(row(sourceRowId({ qualifiedNames: names, column: column }), column));
+            sortedColumns(src).forEach(function (col) {
+                card.appendChild(row(sourceRowId({ qualifiedNames: names, column: col.column }),
+                    col.column, col.dataType));
             });
             sourceCol.appendChild(card);
         });
