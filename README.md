@@ -31,3 +31,5 @@ unit_price               <- [sample.order_items.unit_price]
 discount                 <- [sample.order_items.discount]
 line_total               <- [sample.order_items.discount (derived), sample.order_items.unit_price (derived), sample.order_items.quantity (derived)]
 ```
+
+![sample web](./images/column-lineage-web.png)
