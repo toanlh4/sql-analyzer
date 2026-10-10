@@ -5,10 +5,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
-import javax.sql.DataSource;
-import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.sql.parser.SqlParseException;
-import org.apache.calcite.tools.FrameworkConfig;
 import org.apache.calcite.tools.RelConversionException;
 import org.apache.calcite.tools.ValidationException;
 import org.slf4j.Logger;
@@ -33,13 +30,11 @@ public class ColumnLineageService {
         hikariConfig.setPassword(request.getPassword());
         hikariConfig.setSchema(request.getSchema());
 
-        DataSource dataSource = new HikariDataSource(hikariConfig);
-        PgColumnLineage columnLineage = new PgColumnLineage(dataSource);
-        SchemaPlus rootSchema = columnLineage.registerPostgres(null);
+        try (HikariDataSource dataSource = new HikariDataSource(hikariConfig);) {
+            PgColumnLineage columnLineage = new PgColumnLineage(dataSource, request.getSchema());
+            Map<String, List<ColumnOrigin>> lineage = columnLineage.analyze(request.getSql());
 
-        FrameworkConfig config = columnLineage.buildConfig(rootSchema, request.getSchema());
-        Map<String, List<ColumnOrigin>> lineage = columnLineage.analyze(config, request.getSql());
-
-        return new ColumnLineageResponse(lineage);
+            return new ColumnLineageResponse(lineage);
+        }
     }
 }

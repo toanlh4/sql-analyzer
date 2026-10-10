@@ -49,8 +49,9 @@
         };
     }
 
-    // POST the user inputs as JSON and log the JSON response.
+    // POST the user inputs as JSON and render the JSON response.
     function submitAnalysis(payload) {
+        setStatus("loading", "Waiting for server response…");
         return fetch("/api/analyze-sql/column-lineage", {
             method: "POST",
             headers: {
@@ -60,7 +61,11 @@
             body: JSON.stringify(payload)
         }).then(function (res) {
             if (!res.ok) {
-                throw new Error("HTTP " + res.status + " " + res.statusText);
+                // Prefer the server's error message (Spring error body) over the bare status line.
+                return res.json().catch(function () { return null; }).then(function (body) {
+                    var detail = body && (body.message || body.error);
+                    throw new Error("HTTP " + res.status + (detail ? ": " + detail : " " + res.statusText));
+                });
             }
             return res.json();
         }).then(function (data) {
@@ -68,10 +73,20 @@
             console.log("Mappings:", mappings);
             buildTables(data);
             window.renderColumnLineage(mappings);
+            setStatus(null);
             return data;
         }).catch(function (err) {
             console.error("submitAnalysis failed:", err);
+            setStatus("error", "Analysis failed: " + err.message);
         });
+    }
+
+    // Header notification. kind: "loading" | "error" | null (hide).
+    function setStatus(kind, text) {
+        var status = document.getElementById("status");
+        status.hidden = !kind;
+        status.className = kind ? "status status-" + kind : "status";
+        status.textContent = text || "";
     }
 
     // Row ids used in `data-row` attributes.
@@ -143,12 +158,13 @@
             return byOrdinal(sortedColumns(sources[a])[0], sortedColumns(sources[b])[0]);
         });
 
-        var sourceCol = el("div", "table-col sources");
+        var sourceCol = el("div", null, "table-col sources");
         sourceOrder.forEach(function (key) {
             var src = sources[key];
             var names = src.qualifiedNames;
             var schema = names.slice(0, -1).join(".");
-            var card = tableCard("source", schema ? "source: " + schema : "source", names[names.length - 1]);
+            var sourceTableId = names.join(".");
+            var card = tableCard(sourceTableId, "source", schema ? "source: " + schema : "source", names[names.length - 1]);
             sortedColumns(src).forEach(function (col) {
                 card.appendChild(row(sourceRowId({ qualifiedNames: names, column: col.column }),
                     col.column, col.dataType));
@@ -156,8 +172,9 @@
             sourceCol.appendChild(card);
         });
 
-        var targetCol = el("div", "table-col targets");
-        var targetCard = tableCard("target", "target", "query result");
+        var targetCol = el("div", null, "table-col targets");
+        var targetTableId = "target-id";
+        var targetCard = tableCard(targetTableId, "target", "target", "query result");
         lineages.forEach(function (lineage) {
             targetCard.appendChild(row(targetRowId(lineage.targetColumn), lineage.targetColumn,
                 "#" + lineage.targetColumnOrdinalPosition));
@@ -170,26 +187,27 @@
         canvas.appendChild(targetCol);
     }
 
-    function tableCard(side, kind, name) {
-        var card = el("div", "table " + side);
-        var head = el("div", "table-head");
-        head.appendChild(el("div", "kind", kind));
-        head.appendChild(el("div", "name", name));
+    function tableCard(id, side, kind, name) {
+        var card = el("div", id, "table " + side);
+        var head = el("div", null, "table-head");
+        head.appendChild(el("div", null, "kind", kind));
+        head.appendChild(el("div", null, "name", name));
         card.appendChild(head);
         return card;
     }
 
     function row(rowId, colName, colType) {
-        var r = el("div", "row");
+        var r = el("div", null, "row");
         r.setAttribute("data-row", rowId);
-        r.appendChild(el("span", "col-name", colName));
-        if (colType) r.appendChild(el("span", "col-type", colType));
+        r.appendChild(el("span", null, "col-name", colName));
+        if (colType) r.appendChild(el("span", null, "col-type", colType));
         return r;
     }
 
     // textContent (not innerHTML) so column names from the SQL can't inject markup.
-    function el(tag, className, text) {
+    function el(tag, id, className, text) {
         var node = document.createElement(tag);
+        if (id != null) node.id = id;
         node.className = className;
         if (text != null) node.textContent = text;
         return node;

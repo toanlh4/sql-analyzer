@@ -5,14 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <title>Column Mapping Diagram</title>
         <script src="./libs/jsplumb/2.15.6/js/jsplumb.min.js"></script>
+        <script src="./libs/panzoom/4.6.2/panzoom.min.js"></script>
         <link rel="stylesheet" href="column-lineage.css">
     </head>
     <body>
         <header>
             <div class="header-text">
-                <h1>Source → Target column mapping</h1>
+                <h1>Source - Target column mapping</h1>
                 <p>Source table columns on the left feed the query result columns on the right. Hover a column to trace its connection.</p>
             </div>
+            <div class="status" id="status" role="status" aria-live="polite" hidden></div>
             <div class="header-actions">
                 <button type="button" class="btn" id="btn-open-db">db connection</button>
                 <button type="button" class="btn btn-primary" id="btn-open-sql">enter sql</button>
@@ -64,27 +66,42 @@
             </form>
         </dialog>
 
-        <div id="canvas-wrap">
-            <div id="canvas">
-                <p class="canvas-empty">No lineage yet. Click <strong>enter sql</strong> to analyze a query.</p>
-                
-                
-<!-- sample         <div class="table-head">
-                        <div class="kind">target</div>
-                        <div class="name">dim_customer</div>
-                    </div>-->
-                
-<!--sample data <div class="row key" data-row="src-id"><span class="col-name">cust_id</span><span class="col-type">int</span></div>
-                <div class="row" data-row="src-fname"><span class="col-name">first_name</span><span class="col-type">varchar</span></div>-->
+        <main id="viewport">
+            <div id="canvas-wrap">
+                <div id="canvas">
+                </div>
             </div>
+
+            <div class="view-toolbar" role="toolbar" aria-label="Zoom">
+                <button type="button" class="btn btn-primary" id="btn-show-all" title="Show all columns again" hidden>show all</button>
+                <button type="button" class="btn" id="btn-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+                <button type="button" class="btn" id="btn-zoom-reset" title="Reset to 100%">100%</button>
+                <button type="button" class="btn" id="btn-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+                <button type="button" class="btn" id="btn-zoom-fit" title="Fit diagram to view">fit</button>
+            </div>
+            <div class="minimap" title="Click or drag to move the view">
+                <svg id="minimap" aria-label="Minimap"></svg>
+            </div>
+        </main>
+
+        <div class="ctx-menu" id="ctx-menu" role="menu" hidden>
+            <button type="button" role="menuitem" data-copy="column">copy column name</button>
+            <button type="button" role="menuitem" data-copy="qualified">copy table.column</button>
+            <div class="ctx-sep" role="separator"></div>
+            <button type="button" role="menuitem" data-action="focus">show only related columns</button>
+            <button type="button" role="menuitem" data-action="show-all">show all columns</button>
         </div>
+        <div class="toast" id="toast" role="status" hidden></div>
 
         <div class="legend">
             <span>— direct</span>
             <span>- - combined / derived</span>
             <span>hover a row to highlight its mapping</span>
+            <span>drag to pan, wheel to zoom</span>
+            <span>right-click a column to copy or filter</span>
         </div>
         <script src="./column-lineage.js"></script>
+        <script src="./column-lineage-view.js"></script>
         <script src="./column-lineage-render.js"></script>
     </body>
 </html>

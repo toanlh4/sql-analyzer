@@ -11,6 +11,8 @@
   --wire-active: #2f5d50;
   --mono: "SF Mono", "Menlo", "Consolas", monospace;
   --sans: "Iowan Old Style", "Palatino Linotype", "Georgia", serif;
+  --error: #a3312a;
+  --error-soft: #f7e3e0;
   box-sizing: border-box;
 }
 @media (prefers-color-scheme: dark) {
@@ -22,6 +24,8 @@
     --source-soft: #1c2e28;
     --target-soft: #2c2117;
     --wire: #a9815f;
+    --error: #e5867d;
+    --error-soft: #35201e;
   }
 }
 :root[data-theme="dark"] {
@@ -32,6 +36,8 @@
   --source-soft: #1c2e28;
   --target-soft: #2c2117;
   --wire: #a9815f;
+  --error: #e5867d;
+  --error-soft: #35201e;
 }
 * { box-sizing: border-box; }
 html, body {
@@ -59,6 +65,32 @@ header {
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+}
+/* Header notification: waiting for the server, or the last API error */
+.status {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--panel);
+  max-width: 48ch;
+  overflow-wrap: anywhere;
+}
+.status[hidden] { display: none; }
+.status-loading {
+  color: var(--source);
+  background: var(--source-soft);
+  animation: status-pulse 1.2s ease-in-out infinite;
+}
+.status-error {
+  color: var(--error);
+  background: var(--error-soft);
+  border-color: var(--error);
+}
+@keyframes status-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) {
+  .status-loading { animation: none; }
 }
 @media (max-width: 640px) {
   header { flex-wrap: wrap; padding: 20px 16px 14px; }
@@ -171,16 +203,25 @@ header p {
   max-width: 60ch;
 }
 
-#canvas-wrap {
+/* Viewport: Panzoom moves #canvas inside #canvas-wrap; the toolbar and
+   minimap float above it and are not part of the pan surface. */
+#viewport {
   flex: 1;
-  overflow: auto;
-  padding: 40px 32px 60px;
+  min-height: 0;
+  position: relative;
+}
+#canvas-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 
 #canvas {
   position: relative;
+  width: max-content;
   min-width: 760px;
   min-height: 520px;
+  padding: 40px 32px 60px;
   display: flex;
   justify-content: space-between;
   gap: 220px;
@@ -302,3 +343,115 @@ header p {
   border: 1px solid var(--line);
   pointer-events: none;
 }
+
+/* Zoom toolbar, stacked above the minimap in the bottom-right corner */
+.view-toolbar {
+  position: absolute;
+  right: 16px;
+  bottom: 164px;
+  display: flex;
+  gap: 4px;
+}
+.view-toolbar .btn { padding: 6px 10px; }
+#btn-zoom-reset { min-width: 56px; }
+
+.minimap {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 200px;
+  height: 140px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 var(--line);
+  overflow: hidden;
+}
+.minimap svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  touch-action: none;
+}
+.mm-table { stroke-width: 1; vector-effect: non-scaling-stroke; }
+.mm-source { fill: var(--source-soft); stroke: var(--source); }
+.mm-target { fill: var(--target-soft); stroke: var(--target); }
+.mm-wire {
+  fill: none;
+  stroke: var(--wire);
+  stroke-width: 1;
+  opacity: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+.mm-view {
+  fill: var(--wire-active);
+  fill-opacity: 0.08;
+  stroke: var(--wire-active);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+@media (max-width: 640px) {
+  .minimap { display: none; }
+  .view-toolbar { bottom: 16px; }
+}
+
+/* Column context menu: styled like the .table cards */
+.ctx-menu {
+  position: fixed;
+  z-index: 20;
+  min-width: 180px;
+  padding: 4px 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--source);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 var(--line), 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+.ctx-menu button {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.ctx-menu button:hover,
+.ctx-menu button:focus-visible { background: var(--source-soft); outline: none; }
+.ctx-menu[hidden],
+.ctx-menu button[hidden],
+.toast[hidden] { display: none; }
+
+.toast {
+  position: fixed;
+  z-index: 20;
+  left: 50%;
+  bottom: 64px;
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  padding: 7px 14px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ctx-sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--line);
+}
+
+/* "show only related columns": filtered-out rows and emptied tables */
+.row.row-hidden,
+.table.table-hidden { display: none; }
+.row.row-focus { box-shadow: inset 3px 0 0 var(--source); }
+.table.target .row.row-focus { box-shadow: inset 3px 0 0 var(--target); }

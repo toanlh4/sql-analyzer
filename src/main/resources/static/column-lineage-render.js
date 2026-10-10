@@ -10,7 +10,6 @@
 
   function repaint() { if (instance) instance.repaintEverything(); }
   window.addEventListener("resize", repaint);
-  document.getElementById("canvas-wrap").addEventListener("scroll", repaint);
 
   window.renderColumnLineage = function (mappings) {
     ready(function () {
@@ -26,6 +25,7 @@
           HoverPaintStyle: { stroke: "#2f5d50", strokeWidth: 2.2 },
           Anchors: ["Right", "Left"]
         });
+        window.lineageView.attach(instance);
 
         var connections = [];
 
@@ -77,7 +77,10 @@
           });
         });
 
-        setTimeout(repaint, 50);
+        setTimeout(function () {
+          repaint();
+          window.lineageView.refresh();
+        }, 50);
       });
     });
   };
